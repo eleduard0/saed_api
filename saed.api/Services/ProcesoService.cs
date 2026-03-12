@@ -42,5 +42,29 @@ namespace saed.api.Services
         {
             return await _repository.GetActivo();
         }
+        public async Task<Proceso> CerrarProceso(int id)
+        {
+            var proceso = await _repository.GetById(id);
+
+            if (proceso == null)
+                throw new Exception("Proceso no encontrado");
+
+            if (!proceso.Activo)
+                throw new Exception("El proceso ya está cerrado");
+
+            proceso.Activo = false;
+
+            await _repository.Update(proceso);
+
+            return proceso;
+        }
+        public async Task<Proceso?> ObtenerPorId(int id)
+        {
+            var proceso = await _repository.GetById(id);
+            if (proceso == null)
+                throw new Exception("Proceso no encontrado");
+
+            return proceso;
+        }
     }
 }

@@ -44,8 +44,21 @@ namespace saed.api.Controllers
                 return NotFound("No hay proceso activo");
 
             return Ok(proceso);
-            //eled
-            //alavergaloco
+           
+        }
+        [HttpPut("{id}/cerrar")]
+        public async Task<IActionResult> CerrarProceso(int id)
+        {
+            var proceso = await _service.CerrarProceso(id);
+
+            return Ok(proceso);
+        }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> ObtenerPorId(int id)
+        {
+            var proceso = await _service.ObtenerPorId(id);
+
+            return Ok(proceso);
         }
     }
 }

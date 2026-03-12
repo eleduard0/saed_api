@@ -36,5 +36,9 @@ namespace saed.api.Data.Repositories
             _context.Procesos.Update(proceso);
             await _context.SaveChangesAsync();
         }
+        public async Task<Proceso?> GetById(int id)
+        {
+            return await _context.Procesos.FindAsync(id);
+        }
     }
 }
