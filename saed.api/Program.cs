@@ -22,8 +22,39 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ProcesoRepository>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<EvaluacionService>();
 builder.Services.AddHttpClient<UniversidadApiService>();
 builder.Services.AddScoped<ProcesoService>();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "SAED", Version = "v1" });
+
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Ingrese el token JWT de esta forma: Bearer {tu token}"
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

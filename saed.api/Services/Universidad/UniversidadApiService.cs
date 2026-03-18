@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using saed.api.DTOs.Universidad;
+using System.Text;
 using System.Text.Json;
 
 namespace saed.api.Services.Universidad
@@ -86,7 +87,7 @@ namespace saed.api.Services.Universidad
             };
         }
 
-        public async Task<List<object>> GetStudentSubjects(string token, string matricula, int anio, int periodo)
+        public async Task<List<MateriaAlumnoDto>> GetStudentSubjects(string token, string matricula, int anio, int periodo)
         {
             var data = await MakeRequest(
                 "buscar",
@@ -98,18 +99,18 @@ namespace saed.api.Services.Universidad
                 token
             );
 
-            var result = new List<object>();
+            var result = new List<MateriaAlumnoDto>();
 
             foreach (var item in data.EnumerateArray())
             {
-                result.Add(new
+                result.Add(new MateriaAlumnoDto
                 {
-                    grupo = item[0].ToString(),
-                    nombreGrupo = item[1].ToString(),
-                    idMaestro = item[2].ToString(),
-                    nombreMaestro = item[3].ToString(),
-                    idMateria = item[4].ToString(),
-                    materia = item[5].ToString()
+                    Grupo = item[0].ToString(),
+                    NombreGrupo = item[1].ToString(),
+                    IdMaestro = item[2].ToString(),
+                    NombreMaestro = item[3].ToString(),
+                    IdMateria = item[4].ToString(),
+                    Materia = item[5].ToString()
                 });
             }
 

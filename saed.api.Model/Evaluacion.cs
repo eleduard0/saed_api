@@ -12,24 +12,17 @@ namespace saed.api.Model
 
         public int ProcesoId { get; set; }
 
-        public int AcademiaId { get; set; }
+        public string MatriculaAlumno { get; set; } = string.Empty;
 
-        public string AlumnoMatricula { get; set; }
+        public string IdMaestro { get; set; } = string.Empty;
 
-        public string ProfesorMatricula { get; set; }
+        public string MateriaId { get; set; } = string.Empty;
 
-        public string Grupo { get; set; }
+        public DateTime Fecha { get; set; } = DateTime.UtcNow;
 
-        public string Materia { get; set; }
+        // Relaciones
+        public List<Respuesta> Respuestas { get; set; } = new();
 
-        public DateTime Fecha { get; set; }
-
-        public Proceso Proceso { get; set; }
-
-        public Academia Academia { get; set; }
-
-        public ICollection<Respuesta> Respuestas { get; set; }
-
-        public Comentario Comentario { get; set; }
+        public Comentario? Comentario { get; set; }
     }
 }

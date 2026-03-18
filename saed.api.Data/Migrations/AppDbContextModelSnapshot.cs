@@ -95,36 +95,25 @@ namespace saed.api.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AcademiaId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("AlumnoMatricula")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Grupo")
+                    b.Property<string>("IdMaestro")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Materia")
+                    b.Property<string>("MateriaId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MatriculaAlumno")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("ProcesoId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("ProfesorMatricula")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("AcademiaId");
-
-                    b.HasIndex("ProcesoId");
 
                     b.ToTable("Evaluaciones");
                 });
@@ -248,17 +237,15 @@ namespace saed.api.Data.Migrations
                     b.Property<int>("EvaluacionId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("PreguntaId")
+                    b.Property<int>("OpcionId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Valor")
+                    b.Property<int>("PreguntaId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("EvaluacionId");
-
-                    b.HasIndex("PreguntaId");
 
                     b.ToTable("Respuestas");
                 });
@@ -283,25 +270,6 @@ namespace saed.api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Evaluacion");
-                });
-
-            modelBuilder.Entity("saed.api.Model.Evaluacion", b =>
-                {
-                    b.HasOne("saed.api.Model.Academia", "Academia")
-                        .WithMany()
-                        .HasForeignKey("AcademiaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("saed.api.Model.Proceso", "Proceso")
-                        .WithMany()
-                        .HasForeignKey("ProcesoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Academia");
-
-                    b.Navigation("Proceso");
                 });
 
             modelBuilder.Entity("saed.api.Model.Instrumento", b =>
@@ -345,15 +313,7 @@ namespace saed.api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("saed.api.Model.Pregunta", "Pregunta")
-                        .WithMany()
-                        .HasForeignKey("PreguntaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Evaluacion");
-
-                    b.Navigation("Pregunta");
                 });
 
             modelBuilder.Entity("saed.api.Model.Categoria", b =>
@@ -363,8 +323,7 @@ namespace saed.api.Data.Migrations
 
             modelBuilder.Entity("saed.api.Model.Evaluacion", b =>
                 {
-                    b.Navigation("Comentario")
-                        .IsRequired();
+                    b.Navigation("Comentario");
 
                     b.Navigation("Respuestas");
                 });
