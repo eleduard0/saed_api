@@ -40,5 +40,11 @@ namespace saed.api.Data.Repositories
         {
             return await _context.Procesos.FindAsync(id);
         }
+        public async Task<List<Proceso>> GetByAnio(int anio)
+        {
+            return await _context.Procesos
+                .Where(p => p.Anio == anio)
+                .ToListAsync();
+        }
     }
 }

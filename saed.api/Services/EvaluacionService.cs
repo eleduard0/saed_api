@@ -19,9 +19,16 @@ namespace saed.api.Services
 
         public async Task<int> CrearEvaluacion(string matriculaAlumno, CrearEvaluacionDto dto)
         {
-            
-            var existe = _context.Evaluaciones.Any(e =>
-                e.ProcesoId == dto.ProcesoId &&
+            //  Validar proceso activo
+            var proceso = await _context.Procesos
+                .FirstOrDefaultAsync(p => p.Activo);
+
+            if (proceso == null)
+                throw new Exception("No hay proceso activo");
+
+            //  Validar que no exista evaluación duplicada
+            var existe = await _context.Evaluaciones.AnyAsync(e =>
+                e.ProcesoId == proceso.Id &&
                 e.MatriculaAlumno == matriculaAlumno &&
                 e.IdMaestro == dto.IdMaestro &&
                 e.MateriaId == dto.MateriaId
@@ -32,7 +39,7 @@ namespace saed.api.Services
 
             var evaluacion = new Evaluacion
             {
-                ProcesoId = dto.ProcesoId,
+                ProcesoId = proceso.Id, 
                 MatriculaAlumno = matriculaAlumno,
                 IdMaestro = dto.IdMaestro,
                 MateriaId = dto.MateriaId,
@@ -42,7 +49,7 @@ namespace saed.api.Services
             _context.Evaluaciones.Add(evaluacion);
             await _context.SaveChangesAsync();
 
-            // Guardar respuestas
+            //  Guardar respuestas
             var respuestas = dto.Respuestas.Select(r => new Respuesta
             {
                 EvaluacionId = evaluacion.Id,
@@ -52,7 +59,7 @@ namespace saed.api.Services
 
             _context.Respuestas.AddRange(respuestas);
 
-            // Guardar comentario
+            //  Guardar comentario
             if (!string.IsNullOrEmpty(dto.Comentario))
             {
                 var comentario = new Comentario
@@ -69,18 +76,30 @@ namespace saed.api.Services
             return evaluacion.Id;
         }
 
-        public async Task<List<EvaluacionDisponibleDto>> ObtenerDisponibles(string matricula, string token, int anio, int periodo)
+        public async Task<List<EvaluacionDisponibleDto>> ObtenerDisponibles(string matricula, string token)
         {
-            // 1. Obtener materias del alumno desde universidad
-            var materias = await _universidadApi.GetStudentSubjects(token, matricula, anio, periodo);
+            //  1. Obtener proceso activo
+            var proceso = await _context.Procesos
+                .FirstOrDefaultAsync(p => p.Activo);
 
-            // 2. Obtener evaluaciones ya hechas
+            if (proceso == null)
+                throw new Exception("No hay proceso activo");
+
+            //  2. Obtener materias desde API externa
+            var materias = await _universidadApi.GetStudentSubjects(
+                token,
+                matricula,
+                proceso.Anio,
+                proceso.Periodo
+            );
+
+            //  3. Obtener evaluaciones ya hechas (SOLO DEL PROCESO ACTUAL)
             var evaluadas = await _context.Evaluaciones
-                .Where(e => e.MatriculaAlumno == matricula)
+                .Where(e => e.MatriculaAlumno == matricula && e.ProcesoId == proceso.Id)
                 .Select(e => new { e.IdMaestro, e.MateriaId })
                 .ToListAsync();
 
-            // 3. Filtrar las que faltan
+            // 🔥 4. Filtrar disponibles
             var disponibles = materias
                 .Where(m => !evaluadas.Any(e =>
                     e.IdMaestro == m.IdMaestro &&

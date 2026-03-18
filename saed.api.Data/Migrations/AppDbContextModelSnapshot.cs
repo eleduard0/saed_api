@@ -217,9 +217,12 @@ namespace saed.api.Data.Migrations
                     b.Property<DateTime>("FechaInicio")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Periodo")
+                    b.Property<string>("Nombre")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Periodo")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

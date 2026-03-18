@@ -34,7 +34,7 @@ namespace saed.api.Controllers
 
             var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
-            var result = await _service.ObtenerDisponibles(matricula, token, 2024, 1);
+            var result = await _service.ObtenerDisponibles(matricula, token);
 
             return Ok(result);
         }
