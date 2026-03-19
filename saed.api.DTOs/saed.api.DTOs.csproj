@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\saed.api.Model\saed.api.Model.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Auth\" />
     <Folder Include="Evaluaciones\" />
   </ItemGroup>

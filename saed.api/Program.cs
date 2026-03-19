@@ -21,6 +21,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ProcesoRepository>();
 builder.Services.AddScoped<ProcesoService>();
+builder.Services.AddScoped<InstrumentoRepository>();
+builder.Services.AddScoped<InstrumentoService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

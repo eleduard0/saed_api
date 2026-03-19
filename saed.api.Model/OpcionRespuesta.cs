@@ -1,9 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace saed.api.Model
 {
     public class OpcionRespuesta
@@ -14,8 +8,8 @@ namespace saed.api.Model
 
         public int Valor { get; set; }
 
-        public string Texto { get; set; }
+        public string Texto { get; set; } = string.Empty;
 
-        public Pregunta Pregunta { get; set; }
+        public Pregunta Pregunta { get; set; } = null!;
     }
 }
