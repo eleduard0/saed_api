@@ -9,10 +9,17 @@ namespace saed.api.Model
     public class Proceso
     {
         public int Id { get; set; }
+
         public int Anio { get; set; }
-        public string Periodo { get; set; } = string.Empty;
+
+        public int Periodo { get; set; } // 1, 2, 3
+
+        public string Nombre { get; set; }
+
         public DateTime FechaInicio { get; set; }
+
         public DateTime FechaFin { get; set; }
+
         public bool Activo { get; set; }
     }
 }

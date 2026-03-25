@@ -105,5 +105,7 @@ namespace saed.api.Data
                 .IsRequired();
             #endregion
         }
+        
+        public DbSet<Usuario> Usuarios { get; set; }
     }
 }
