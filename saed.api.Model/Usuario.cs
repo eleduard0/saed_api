@@ -10,7 +10,7 @@ namespace saed.api.Model
     {
         public int Id { get; set; }
 
-        public string Correo { get; set; }
+        public string Username { get; set; }
 
         public string PasswordHash { get; set; }
 
