@@ -19,7 +19,7 @@ namespace saed.api.Controllers
         public async Task<IActionResult> Crear(CrearEvaluacionDto dto)
         {
             
-            var matricula = "L532410081";
+            var matricula = "5312100348";
 
             var id = await _service.CrearEvaluacion(matricula, dto);
 
@@ -30,7 +30,7 @@ namespace saed.api.Controllers
         public async Task<IActionResult> ObtenerDisponibles()
         {
             
-            var matricula = "L532410081";
+            var matricula = "5312100348";
 
             var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
