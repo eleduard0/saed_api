@@ -16,7 +16,9 @@ namespace saed.api.Model
 
         public int OpcionId { get; set; }
 
-        // Relación
-        public Evaluacion Evaluacion { get; set; } = null!;
+        public Evaluacion Evaluacion { get; set; }
+
+        public Pregunta Pregunta { get; set; }
+
     }
 }

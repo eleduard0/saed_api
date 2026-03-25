@@ -50,6 +50,8 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<EvaluacionService>();
 builder.Services.AddHttpClient<UniversidadApiService>();
 builder.Services.AddScoped<ProcesoService>();
+builder.Services.AddScoped<InstrumentoRepository>();
+builder.Services.AddScoped<InstrumentoService>();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "SAED", Version = "v1" });
