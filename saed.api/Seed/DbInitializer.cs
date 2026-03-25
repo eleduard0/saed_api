@@ -18,7 +18,7 @@ namespace saed.api.Seed
             //  Crear admin
             var admin = new Usuario
             {
-                Correo = "admin@saed.com",
+                Username = "admin",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123*"),
                 Rol = "Admin"
             };

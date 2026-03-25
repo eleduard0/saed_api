@@ -26,6 +26,7 @@ namespace saed.api.Data
         public DbSet<Respuesta> Respuestas { get; set; }
 
         public DbSet<Comentario> Comentarios { get; set; }
+        
         public DbSet<Usuario> Usuarios { get; set; }
     }
 }
