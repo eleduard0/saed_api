@@ -10,7 +10,7 @@ namespace saed.api.DTOs.Procesos
     {
         public int Anio { get; set; }
 
-        public string Periodo { get; set; } = string.Empty;
+        public int Periodo { get; set; } 
 
         public DateTime FechaInicio { get; set; }
 

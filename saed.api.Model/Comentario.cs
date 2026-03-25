@@ -12,8 +12,9 @@ namespace saed.api.Model
 
         public int EvaluacionId { get; set; }
 
-        public string Texto { get; set; }
+        public string Texto { get; set; } = string.Empty;
 
-        public Evaluacion Evaluacion { get; set; }
+        // Relación
+        public Evaluacion Evaluacion { get; set; } = null!;
     }
 }

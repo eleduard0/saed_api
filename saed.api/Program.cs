@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using saed.api.Data;
 using saed.api.Data.Repositories;
+using saed.api.Seed;
 using saed.api.Services;
+using saed.api.Services.Universidad;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,16 +22,64 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ProcesoRepository>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<EvaluacionService>();
+builder.Services.AddHttpClient<UniversidadApiService>();
 builder.Services.AddScoped<ProcesoService>();
-var app = builder.Build();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "SAED", Version = "v1" });
 
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Ingrese el token JWT de esta forma: Bearer {tu token}"
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
+var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    await DbInitializer.SeedAdminAsync(context);
+}
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseCors("AllowAngular");
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
