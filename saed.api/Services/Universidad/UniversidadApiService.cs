@@ -71,6 +71,8 @@ namespace saed.api.Services.Universidad
                 },
                 token
             );
+            Console.WriteLine($"GetStudentData response: {data.ToString()}");
+            Console.WriteLine($"ValueKind: {data.ValueKind}");
 
             if (data.ValueKind != JsonValueKind.Array || data.GetArrayLength() == 0)
                 return null;
@@ -83,8 +85,9 @@ namespace saed.api.Services.Universidad
                 Nombre = alumno[1].ToString(),
                 ApellidoPaterno = alumno[2].ToString(),
                 ApellidoMaterno = alumno[3].ToString(),
-                Correo = alumno[15].ToString()
+                Correo = alumno[13].ToString()
             };
+            
         }
 
         public async Task<List<MateriaAlumnoDto>> GetStudentSubjects(string token, string matricula, int anio, int periodo)

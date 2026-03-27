@@ -47,6 +47,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ProcesoRepository>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddHttpContextAccessor(); 
 builder.Services.AddScoped<EvaluacionService>();
 builder.Services.AddHttpClient<UniversidadApiService>();
 builder.Services.AddScoped<ProcesoService>();

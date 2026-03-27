@@ -3,6 +3,7 @@ using saed.api.Data;
 using saed.api.DTOs.Evaluaciones;
 using saed.api.Model;
 using saed.api.Services.Universidad;
+using System.Security.Claims;
 
 namespace saed.api.Services
 {
@@ -10,23 +11,54 @@ namespace saed.api.Services
     {
         private readonly AppDbContext _context;
         private readonly UniversidadApiService _universidadApi;
+        private readonly IHttpContextAccessor _httpContext;
 
-        public EvaluacionService(AppDbContext context, UniversidadApiService universidadApi)
+        public EvaluacionService(
+            AppDbContext context,
+            UniversidadApiService universidadApi,
+            IHttpContextAccessor httpContext)
         {
             _context = context;
             _universidadApi = universidadApi;
+            _httpContext = httpContext;
         }
 
-        public async Task<int> CrearEvaluacion(string matriculaAlumno, CrearEvaluacionDto dto)
+        // ─── Helpers privados para leer claims del JWT ────────────────────────
+
+        private string ObtenerMatricula()
         {
-            //  Validar proceso activo
+            var matricula = _httpContext.HttpContext?.User
+                .FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(matricula))
+                throw new UnauthorizedAccessException("No se pudo obtener la matrícula del token");
+
+            return matricula;
+        }
+
+        private string ObtenerTokenUniversidad()
+        {
+            var token = _httpContext.HttpContext?.User
+                .FindFirstValue("token_universidad");
+
+            if (string.IsNullOrEmpty(token))
+                throw new UnauthorizedAccessException("No se encontró el token universitario en la sesión");
+
+            return token;
+        }
+
+        // ─── Crear evaluación ─────────────────────────────────────────────────
+
+        public async Task<int> CrearEvaluacion(CrearEvaluacionDto dto)
+        {
+            var matriculaAlumno = ObtenerMatricula();
+
             var proceso = await _context.Procesos
                 .FirstOrDefaultAsync(p => p.Activo);
 
             if (proceso == null)
                 throw new Exception("No hay proceso activo");
 
-            //  Validar que no exista evaluación duplicada
             var existe = await _context.Evaluaciones.AnyAsync(e =>
                 e.ProcesoId == proceso.Id &&
                 e.MatriculaAlumno == matriculaAlumno &&
@@ -39,7 +71,7 @@ namespace saed.api.Services
 
             var evaluacion = new Evaluacion
             {
-                ProcesoId = proceso.Id, 
+                ProcesoId = proceso.Id,
                 MatriculaAlumno = matriculaAlumno,
                 IdMaestro = dto.IdMaestro,
                 MateriaId = dto.MateriaId,
@@ -49,7 +81,6 @@ namespace saed.api.Services
             _context.Evaluaciones.Add(evaluacion);
             await _context.SaveChangesAsync();
 
-            //  Guardar respuestas
             var respuestas = dto.Respuestas.Select(r => new Respuesta
             {
                 EvaluacionId = evaluacion.Id,
@@ -59,16 +90,13 @@ namespace saed.api.Services
 
             _context.Respuestas.AddRange(respuestas);
 
-            //  Guardar comentario
             if (!string.IsNullOrEmpty(dto.Comentario))
             {
-                var comentario = new Comentario
+                _context.Comentarios.Add(new Comentario
                 {
                     EvaluacionId = evaluacion.Id,
                     Texto = dto.Comentario
-                };
-
-                _context.Comentarios.Add(comentario);
+                });
             }
 
             await _context.SaveChangesAsync();
@@ -76,31 +104,32 @@ namespace saed.api.Services
             return evaluacion.Id;
         }
 
-        public async Task<List<EvaluacionDisponibleDto>> ObtenerDisponibles(string matricula, string token)
+        // ─── Obtener evaluaciones disponibles ─────────────────────────────────
+
+        public async Task<List<EvaluacionDisponibleDto>> ObtenerDisponibles()
         {
-            //  1. Obtener proceso activo
+            var matricula = ObtenerMatricula();
+            var tokenUniversidad = ObtenerTokenUniversidad();
+
             var proceso = await _context.Procesos
                 .FirstOrDefaultAsync(p => p.Activo);
 
             if (proceso == null)
                 throw new Exception("No hay proceso activo");
 
-            //  2. Obtener materias desde API externa
             var materias = await _universidadApi.GetStudentSubjects(
-                token,
+                tokenUniversidad,
                 matricula,
                 proceso.Anio,
                 proceso.Periodo
             );
 
-            //  3. Obtener evaluaciones ya hechas (SOLO DEL PROCESO ACTUAL)
             var evaluadas = await _context.Evaluaciones
                 .Where(e => e.MatriculaAlumno == matricula && e.ProcesoId == proceso.Id)
                 .Select(e => new { e.IdMaestro, e.MateriaId })
                 .ToListAsync();
 
-            // 🔥 4. Filtrar disponibles
-            var disponibles = materias
+            return materias
                 .Where(m => !evaluadas.Any(e =>
                     e.IdMaestro == m.IdMaestro &&
                     e.MateriaId == m.IdMateria
@@ -114,8 +143,6 @@ namespace saed.api.Services
                     Grupo = m.Grupo
                 })
                 .ToList();
-
-            return disponibles;
         }
     }
 }
