@@ -3,7 +3,7 @@ using saed.api.Model;
 
 namespace saed.api.Data.Repositories
 {
-    // Centraliza la logica del grafo Instrumento y sus reglas de integridad.
+    // Centraliza la lógica del grafo Instrumento y sus reglas de integridad.
     public class InstrumentoRepository
     {
         private readonly AppDbContext _context;
@@ -14,7 +14,8 @@ namespace saed.api.Data.Repositories
         }
 
         #region Consultas
-        // Carga el instrumento con categorias, preguntas y opciones para operar sobre el grafo completo.
+
+        // Carga el instrumento con categorías, preguntas y opciones para operar sobre el grafo completo.
         public async Task<Instrumento?> GetByIdFullAsync(int id)
         {
             var instrumento = await _context.Instrumentos
@@ -38,20 +39,18 @@ namespace saed.api.Data.Repositories
                 .ToListAsync();
 
             foreach (var instrumento in instrumentos)
-            {
                 OrdenarGrafo(instrumento);
-            }
 
             return instrumentos;
         }
+
         #endregion
 
         #region Escrituras
-        // Crea el instrumento junto con todo su arbol de categorias, preguntas y opciones.
+
+        // Crea el instrumento junto con todo su árbol de categorías, preguntas y opciones.
         public async Task<Instrumento> CreateAsync(Instrumento instrumento)
         {
-            await EnsureProcesoActivoAsignadoAsync(instrumento);
-
             _context.Instrumentos.Add(instrumento);
             await _context.SaveChangesAsync();
 
@@ -67,16 +66,15 @@ namespace saed.api.Data.Repositories
                 .FirstOrDefaultAsync(i => i.Id == plantillaId);
 
             if (plantilla == null)
-            {
                 return null;
-            }
 
             var nuevo = new Instrumento
             {
                 Nombre = plantilla.Nombre + " - copia",
                 TipoInstrumento = plantilla.TipoInstrumento,
                 EsPlantilla = true,
-                ProcesoId = plantilla.ProcesoId
+                Activo = true,
+                // ProcesoId eliminado — el instrumento no conoce al proceso
             };
 
             foreach (var categoria in plantilla.Categorias)
@@ -96,14 +94,14 @@ namespace saed.api.Data.Repositories
                         Orden = pregunta.Orden
                     };
 
-                        foreach (var opcion in pregunta.Opciones)
+                    foreach (var opcion in pregunta.Opciones)
+                    {
+                        nuevaPregunta.Opciones.Add(new OpcionRespuesta
                         {
-                            nuevaPregunta.Opciones.Add(new OpcionRespuesta
-                            {
-                                Valor = opcion.Valor,
-                                Texto = opcion.Texto
-                            });
-                        }
+                            Valor = opcion.Valor,
+                            Texto = opcion.Texto
+                        });
+                    }
 
                     nuevaCategoria.Preguntas.Add(nuevaPregunta);
                 }
@@ -111,25 +109,20 @@ namespace saed.api.Data.Repositories
                 nuevo.Categorias.Add(nuevaCategoria);
             }
 
-            await EnsureProcesoActivoAsignadoAsync(nuevo);
-
             _context.Instrumentos.Add(nuevo);
             await _context.SaveChangesAsync();
 
             return await GetByIdFullAsync(nuevo.Id);
         }
 
-        // Sincroniza el payload recibido contra el grafo persistido, agregando, moviendo, actualizando y eliminando nodos.
+        // Sincroniza el payload recibido contra el grafo persistido.
         public async Task<Instrumento?> UpdateAsync(Instrumento instrumento)
         {
             ValidatePayload(instrumento);
-            await EnsureProcesoActivoAsignadoAsync(instrumento);
 
             var existente = await LoadExistingAsync(instrumento.Id);
             if (existente == null)
-            {
                 return null;
-            }
 
             var categoriasEntrantesIds = GetCategoriasEntrantesIds(instrumento);
             var preguntasEntrantesIds = GetPreguntasEntrantesIds(instrumento);
@@ -171,28 +164,24 @@ namespace saed.api.Data.Repositories
         {
             var existente = await GetByIdFullAsync(id);
             if (existente == null)
-            {
                 return false;
-            }
 
             _context.Instrumentos.Remove(existente);
             await _context.SaveChangesAsync();
             return true;
         }
+
         #endregion
 
-        #region Validacion del payload
+        #region Validación del payload
+
         private static void ValidatePayload(Instrumento instrumento)
         {
             if (instrumento.Categorias == null)
-            {
-                throw new InvalidOperationException("Categorias no enviadas.");
-            }
+                throw new InvalidOperationException("Categorías no enviadas.");
 
             if (!instrumento.Categorias.Any())
-            {
                 throw new InvalidOperationException("Un instrumento no puede quedarse sin categorías.");
-            }
 
             NormalizeOrden(instrumento);
             ValidateCategoriasEntrantes(instrumento);
@@ -210,23 +199,17 @@ namespace saed.api.Data.Repositories
                 categoria.Orden = i + 1;
 
                 if (categoria.Preguntas == null)
-                {
                     categoria.Preguntas = new List<Pregunta>();
-                }
 
                 if (!categoria.Preguntas.Any())
-                {
                     throw new InvalidOperationException("Cada categoría debe tener al menos una pregunta.");
-                }
 
                 categoria.Preguntas = categoria.Preguntas
                     .OrderBy(p => p.Orden)
                     .ToList();
 
                 for (int j = 0; j < categoria.Preguntas.Count; j++)
-                {
                     categoria.Preguntas.ElementAt(j).Orden = j + 1;
-                }
             }
         }
 
@@ -235,14 +218,14 @@ namespace saed.api.Data.Repositories
             foreach (var categoria in instrumento.Categorias)
             {
                 if (categoria.Id == 0 && string.IsNullOrWhiteSpace(categoria.Nombre))
-                {
                     throw new InvalidOperationException("No puedes enviar una categoría vacía o sin identificación.");
-                }
             }
         }
+
         #endregion
 
-        #region Carga y validacion de ids
+        #region Carga y validación de ids
+
         private async Task<Instrumento?> LoadExistingAsync(int id)
         {
             return await _context.Instrumentos
@@ -273,30 +256,24 @@ namespace saed.api.Data.Repositories
         private static void ValidateDuplicateIds(List<int> categoriasEntrantesIds, List<int> preguntasEntrantesIds)
         {
             if (categoriasEntrantesIds.Count != categoriasEntrantesIds.Distinct().Count())
-            {
                 throw new InvalidOperationException("Hay categorías duplicadas en el payload.");
-            }
 
             if (preguntasEntrantesIds.Count != preguntasEntrantesIds.Distinct().Count())
-            {
                 throw new InvalidOperationException("Hay preguntas duplicadas en el payload.");
-            }
         }
+
         #endregion
 
         #region Reglas del instrumento
-        // Desplaza temporalmente los ordenes para evitar choques al reordenar el grafo dentro de la misma transaccion.
+
+        // Desplaza temporalmente los órdenes para evitar choques al reordenar dentro de la misma transacción.
         private async Task ApplyOrdenConflictFixAsync(Instrumento existente)
         {
             foreach (var categoria in existente.Categorias)
-            {
                 categoria.Orden += 1000;
-            }
 
             foreach (var pregunta in existente.Categorias.SelectMany(c => c.Preguntas))
-            {
                 pregunta.Orden += 1000;
-            }
 
             await _context.SaveChangesAsync();
         }
@@ -307,51 +284,13 @@ namespace saed.api.Data.Repositories
             existente.TipoInstrumento = instrumento.TipoInstrumento;
             existente.EsPlantilla = instrumento.EsPlantilla;
             existente.Activo = instrumento.Activo;
-            existente.ProcesoId = instrumento.ProcesoId;
+            // ProcesoId eliminado — ya no vive en el instrumento
         }
 
-        // Resuelve la regla de activacion del instrumento a partir del proceso asignado.
-        private async Task EnsureProcesoActivoAsignadoAsync(Instrumento instrumento)
-        {
-            if (instrumento.ProcesoId.HasValue && instrumento.ProcesoId.Value <= 0)
-            {
-                instrumento.ProcesoId = null;
-            }
-
-            if (instrumento.ProcesoId.HasValue)
-            {
-                var proceso = await _context.Procesos.FirstOrDefaultAsync(p => p.Id == instrumento.ProcesoId.Value);
-                if (proceso == null)
-                {
-                    throw new InvalidOperationException("El proceso asignado no existe.");
-                }
-
-                instrumento.Activo = proceso.Activo;
-                await ValidateProcesoTipoUnicoAsync(instrumento, proceso.Id);
-                return;
-            }
-
-            instrumento.Activo = false;
-        }
-
-        private async Task ValidateProcesoTipoUnicoAsync(Instrumento instrumento, int procesoId)
-        {
-            var existente = await _context.Instrumentos
-                .AsNoTracking()
-                .FirstOrDefaultAsync(i =>
-                    i.ProcesoId == procesoId &&
-                    i.TipoInstrumento == instrumento.TipoInstrumento &&
-                    i.Id != instrumento.Id);
-
-            if (existente != null)
-            {
-                throw new InvalidOperationException(
-                    $"El proceso ya tiene un instrumento asignado de tipo {instrumento.TipoInstrumento}.");
-            }
-        }
         #endregion
 
-        #region Sincronizacion del grafo
+        #region Sincronización del grafo
+
         private static Dictionary<int, Categoria> BuildCategoriasExistentesPorId(Instrumento existente)
         {
             return existente.Categorias.ToDictionary(c => c.Id);
@@ -370,7 +309,6 @@ namespace saed.api.Data.Repositories
             Dictionary<int, Categoria> categoriasExistentesPorId,
             Dictionary<int, Pregunta> preguntasExistentesPorId)
         {
-            // Recorre el payload entrante para decidir que nodos se crean, cuales se actualizan y cuales cambian de padre.
             foreach (var categoria in instrumento.Categorias)
             {
                 Categoria categoriaDestino;
@@ -387,9 +325,7 @@ namespace saed.api.Data.Repositories
                 else
                 {
                     if (!categoriasExistentesPorId.TryGetValue(categoria.Id, out categoriaDestino!))
-                    {
                         continue;
-                    }
 
                     categoriaDestino.Nombre = categoria.Nombre;
                     categoriaDestino.Orden = categoria.Orden;
@@ -422,22 +358,16 @@ namespace saed.api.Data.Repositories
                     else
                     {
                         if (!preguntasExistentesPorId.TryGetValue(pregunta.Id, out var preguntaExistente))
-                        {
                             continue;
-                        }
 
+                        // Mover pregunta de categoría si cambió
                         if (preguntaExistente.CategoriaId != categoriaDestino.Id)
                         {
                             var categoriaActual = existente.Categorias.FirstOrDefault(c => c.Id == preguntaExistente.CategoriaId);
-                            if (categoriaActual != null)
-                            {
-                                categoriaActual.Preguntas.Remove(preguntaExistente);
-                            }
+                            categoriaActual?.Preguntas.Remove(preguntaExistente);
 
                             if (!categoriaDestino.Preguntas.Contains(preguntaExistente))
-                            {
                                 categoriaDestino.Preguntas.Add(preguntaExistente);
-                            }
 
                             preguntaExistente.Categoria = categoriaDestino;
                         }
@@ -452,7 +382,7 @@ namespace saed.api.Data.Repositories
             }
         }
 
-        // Mantiene en sintonia la coleccion de opciones de una pregunta existente.
+        // Mantiene en sincronía la colección de opciones de una pregunta existente.
         private void SyncOpciones(Pregunta preguntaExistente, Pregunta pregunta)
         {
             var opcionesEntrantes = pregunta.Opciones ?? new List<OpcionRespuesta>();
@@ -461,24 +391,14 @@ namespace saed.api.Data.Repositories
                 .Select(o => o.Id)
                 .ToHashSet();
 
-            if (opcionesEntrantesIds.Count == 0)
-            {
-                foreach (var opcionRemovida in preguntaExistente.Opciones.ToList())
-                {
-                    _context.OpcionesRespuesta.Remove(opcionRemovida);
-                }
-            }
-            else
-            {
-                var opcionesAEliminar = preguntaExistente.Opciones
+            var opcionesAEliminar = opcionesEntrantesIds.Count == 0
+                ? preguntaExistente.Opciones.ToList()
+                : preguntaExistente.Opciones
                     .Where(o => !opcionesEntrantesIds.Contains(o.Id))
                     .ToList();
 
-                foreach (var opcionRemovida in opcionesAEliminar)
-                {
-                    _context.OpcionesRespuesta.Remove(opcionRemovida);
-                }
-            }
+            foreach (var opcionRemovida in opcionesAEliminar)
+                _context.OpcionesRespuesta.Remove(opcionRemovida);
 
             foreach (var opcion in opcionesEntrantes)
             {
@@ -494,9 +414,7 @@ namespace saed.api.Data.Repositories
                 {
                     var opcionExistente = preguntaExistente.Opciones.FirstOrDefault(o => o.Id == opcion.Id);
                     if (opcionExistente == null)
-                    {
                         continue;
-                    }
 
                     opcionExistente.Texto = opcion.Texto;
                     opcionExistente.Valor = opcion.Valor;
@@ -514,30 +432,26 @@ namespace saed.api.Data.Repositories
                 .Where(p => p.Id != 0 && !preguntasEntrantesSet.Contains(p.Id))
                 .ToList();
 
-            foreach (var preguntaRemovida in preguntasAEliminar)
-            {
-                _context.Preguntas.Remove(preguntaRemovida);
-            }
+            foreach (var p in preguntasAEliminar)
+                _context.Preguntas.Remove(p);
 
             var categoriasAEliminar = existente.Categorias
                 .Where(c => c.Id != 0 && !categoriasEntrantesSet.Contains(c.Id))
                 .ToList();
 
-            foreach (var categoriaRemovida in categoriasAEliminar)
-            {
-                _context.Categorias.Remove(categoriaRemovida);
-            }
+            foreach (var c in categoriasAEliminar)
+                _context.Categorias.Remove(c);
         }
+
         #endregion
 
         #region Orden de salida
-        // Ordena el grafo antes de devolverlo a capas superiores para que la API responda de forma estable.
+
+        // Ordena el grafo antes de devolverlo a capas superiores para respuesta estable.
         private static void OrdenarGrafo(Instrumento? instrumento)
         {
             if (instrumento == null)
-            {
                 return;
-            }
 
             instrumento.Categorias = (instrumento.Categorias ?? new List<Categoria>())
                 .OrderBy(c => c.Orden)
@@ -557,6 +471,7 @@ namespace saed.api.Data.Repositories
                 }
             }
         }
+
         #endregion
     }
 }

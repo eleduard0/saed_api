@@ -1,4 +1,5 @@
 ﻿using saed.api.Data.Repositories;
+using saed.api.DTOs.Procesos;
 using saed.api.Model;
 
 namespace saed.api.Services
@@ -12,78 +13,118 @@ namespace saed.api.Services
             _repository = repository;
         }
 
-        public async Task<Proceso> CrearProceso(int anio, int periodo, DateTime inicio, DateTime fin)
+        // ── Crear ─────────────────────────────────────────────────────────────
+        public async Task<ProcesoDto> CrearProceso(CrearProcesoDto dto)
         {
-            // Validar que no haya proceso activo
+            // Validar que no haya otro proceso activo
             var activo = await _repository.GetActivo();
             if (activo != null)
-                throw new Exception("Ya existe un proceso activo");
+                throw new Exception("Ya existe un proceso activo. Ciérralo antes de crear uno nuevo.");
 
             // Validar periodo
-            if (periodo < 1 || periodo > 3)
-                throw new Exception("Periodo inválido");
+            if (dto.Periodo < 1 || dto.Periodo > 3)
+                throw new Exception("Periodo inválido. Debe ser 1, 2 o 3.");
 
             // Validar fechas
-            if (inicio >= fin)
-                throw new Exception("La fecha de inicio debe ser menor que la fecha fin");
+            if (dto.FechaInicio >= dto.FechaFin)
+                throw new Exception("La fecha de inicio debe ser anterior a la fecha fin.");
 
-            // Obtener consecutivo (por año)
-            var procesosDelAnio = await _repository.GetByAnio(anio);
+            // Validar instrumento
+            if (dto.InstrumentoId <= 0)
+                throw new Exception("Debes seleccionar un instrumento de evaluación.");
 
-            var consecutivo = procesosDelAnio.Any()
-                ? procesosDelAnio.Count + 1
-                : 1;
-
-            // Generar nombre
-            var nombre = $"Oficial {consecutivo} {anio}";
+            // Generar nombre automático: "Oficial N YYYY"
+            var procesosDelAnio = await _repository.GetByAnio(dto.Anio);
+            var consecutivo = procesosDelAnio.Any() ? procesosDelAnio.Count + 1 : 1;
+            var nombre = $"Oficial {consecutivo} {dto.Anio}";
 
             var proceso = new Proceso
             {
-                Anio = anio,
-                Periodo = periodo,
+                Anio = dto.Anio,
+                Periodo = dto.Periodo,
                 Nombre = nombre,
-                FechaInicio = inicio,
-                FechaFin = fin,
-                Activo = true
+                FechaInicio = dto.FechaInicio,
+                FechaFin = dto.FechaFin,
+                Activo = true,
+                InstrumentoId = dto.InstrumentoId
             };
 
             await _repository.Add(proceso);
 
-            return proceso;
+            return MapToDto(proceso);
         }
 
-        public async Task<List<Proceso>> ObtenerProcesos()
+        // ── Consultas ─────────────────────────────────────────────────────────
+        public async Task<List<ProcesoDto>> ObtenerProcesos()
         {
-            return await _repository.GetAll();
+            var procesos = await _repository.GetAll();
+            return procesos.Select(MapToDto).ToList();
         }
 
-        public async Task<Proceso?> ObtenerActivo()
+        public async Task<ProcesoDto?> ObtenerActivo()
         {
-            return await _repository.GetActivo();
+            var proceso = await _repository.GetActivo();
+            return proceso == null ? null : MapToDto(proceso);
         }
-        public async Task<Proceso> CerrarProceso(int id)
+
+        public async Task<ProcesoDto> ObtenerPorId(int id)
+        {
+            var proceso = await _repository.GetById(id);
+            if (proceso == null)
+                throw new Exception("Proceso no encontrado.");
+
+            return MapToDto(proceso);
+        }
+
+        // ── Acciones ──────────────────────────────────────────────────────────
+        public async Task<ProcesoDto> CerrarProceso(int id)
         {
             var proceso = await _repository.GetById(id);
 
             if (proceso == null)
-                throw new Exception("Proceso no encontrado");
+                throw new Exception("Proceso no encontrado.");
 
             if (!proceso.Activo)
-                throw new Exception("El proceso ya está cerrado");
+                throw new Exception("El proceso ya está cerrado.");
 
             proceso.Activo = false;
-
             await _repository.Update(proceso);
 
-            return proceso;
+            return MapToDto(proceso);
         }
-        public async Task<Proceso?> ObtenerPorId(int id)
+
+        public async Task<ProcesoDto> ActivarProceso(int id)
         {
+            // Cerrar el proceso activo actual si existe
+            var actual = await _repository.GetActivo();
+            if (actual != null && actual.Id != id)
+            {
+                actual.Activo = false;
+                await _repository.Update(actual);
+            }
+
             var proceso = await _repository.GetById(id);
             if (proceso == null)
-                throw new Exception("Proceso no encontrado");
+                throw new Exception("Proceso no encontrado.");
 
-            return proceso;
+            proceso.Activo = true;
+            await _repository.Update(proceso);
+
+            return MapToDto(proceso);
         }
+
+        // ── Mapeo ─────────────────────────────────────────────────────────────
+        private static ProcesoDto MapToDto(Proceso p) => new()
+        {
+            Id = p.Id,
+            Nombre = p.Nombre,
+            Anio = p.Anio,
+            Periodo = p.Periodo,
+            FechaInicio = p.FechaInicio,
+            FechaFin = p.FechaFin,
+            Activo = p.Activo,
+            InstrumentoId = p.InstrumentoId,
+            NombreInstrumento = p.Instrumento?.Nombre
+        };
     }
 }

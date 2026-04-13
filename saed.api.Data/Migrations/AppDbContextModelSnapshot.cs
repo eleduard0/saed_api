@@ -52,7 +52,8 @@ namespace saed.api.Data.Migrations
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("Orden")
                         .HasColumnType("integer");
@@ -61,7 +62,7 @@ namespace saed.api.Data.Migrations
 
                     b.HasIndex("InstrumentoId");
 
-                    b.ToTable("Categorias");
+                    b.ToTable("Categorias", (string)null);
                 });
 
             modelBuilder.Entity("saed.api.Model.Comentario", b =>
@@ -126,21 +127,24 @@ namespace saed.api.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AcademiaId")
-                        .HasColumnType("integer");
-
                     b.Property<bool>("Activo")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("EsPlantilla")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TipoInstrumento")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AcademiaId");
-
-                    b.ToTable("Instrumentos");
+                    b.ToTable("Instrumentos", (string)null);
                 });
 
             modelBuilder.Entity("saed.api.Model.OpcionRespuesta", b =>
@@ -156,7 +160,8 @@ namespace saed.api.Data.Migrations
 
                     b.Property<string>("Texto")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.Property<int>("Valor")
                         .HasColumnType("integer");
@@ -165,7 +170,7 @@ namespace saed.api.Data.Migrations
 
                     b.HasIndex("PreguntaId");
 
-                    b.ToTable("OpcionesRespuesta");
+                    b.ToTable("OpcionesRespuesta", (string)null);
                 });
 
             modelBuilder.Entity("saed.api.Model.Pregunta", b =>
@@ -184,7 +189,8 @@ namespace saed.api.Data.Migrations
 
                     b.Property<string>("Texto")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Tipo")
                         .IsRequired()
@@ -194,7 +200,7 @@ namespace saed.api.Data.Migrations
 
                     b.HasIndex("CategoriaId");
 
-                    b.ToTable("Preguntas");
+                    b.ToTable("Preguntas", (string)null);
                 });
 
             modelBuilder.Entity("saed.api.Model.Proceso", b =>
@@ -211,22 +217,28 @@ namespace saed.api.Data.Migrations
                     b.Property<int>("Anio")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("FechaFin")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly>("FechaFin")
+                        .HasColumnType("date");
 
-                    b.Property<DateTime>("FechaInicio")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly>("FechaInicio")
+                        .HasColumnType("date");
+
+                    b.Property<int?>("InstrumentoId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("Periodo")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Procesos");
+                    b.HasIndex("InstrumentoId");
+
+                    b.ToTable("Procesos", (string)null);
                 });
 
             modelBuilder.Entity("saed.api.Model.Respuesta", b =>
@@ -249,6 +261,8 @@ namespace saed.api.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("EvaluacionId");
+
+                    b.HasIndex("PreguntaId");
 
                     b.ToTable("Respuestas");
                 });
@@ -300,17 +314,6 @@ namespace saed.api.Data.Migrations
                     b.Navigation("Evaluacion");
                 });
 
-            modelBuilder.Entity("saed.api.Model.Instrumento", b =>
-                {
-                    b.HasOne("saed.api.Model.Academia", "Academia")
-                        .WithMany()
-                        .HasForeignKey("AcademiaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Academia");
-                });
-
             modelBuilder.Entity("saed.api.Model.OpcionRespuesta", b =>
                 {
                     b.HasOne("saed.api.Model.Pregunta", "Pregunta")
@@ -333,6 +336,16 @@ namespace saed.api.Data.Migrations
                     b.Navigation("Categoria");
                 });
 
+            modelBuilder.Entity("saed.api.Model.Proceso", b =>
+                {
+                    b.HasOne("saed.api.Model.Instrumento", "Instrumento")
+                        .WithMany()
+                        .HasForeignKey("InstrumentoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Instrumento");
+                });
+
             modelBuilder.Entity("saed.api.Model.Respuesta", b =>
                 {
                     b.HasOne("saed.api.Model.Evaluacion", "Evaluacion")
@@ -341,7 +354,15 @@ namespace saed.api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("saed.api.Model.Pregunta", "Pregunta")
+                        .WithMany()
+                        .HasForeignKey("PreguntaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Evaluacion");
+
+                    b.Navigation("Pregunta");
                 });
 
             modelBuilder.Entity("saed.api.Model.Categoria", b =>

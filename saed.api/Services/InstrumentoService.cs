@@ -4,7 +4,7 @@ using saed.api.Model;
 
 namespace saed.api.Services
 {
-    // Orquesta el flujo del modulo y hace el mapeo explicito entre DTOs y entidades.
+    // Orquesta el flujo del módulo y hace el mapeo explícito entre DTOs y entidades.
     public class InstrumentoService
     {
         private readonly InstrumentoRepository _repository;
@@ -14,7 +14,8 @@ namespace saed.api.Services
             _repository = repository;
         }
 
-        #region Operaciones publicas
+        #region Operaciones públicas
+
         public async Task<List<InstrumentoCreateDto>> GetAllAsync()
         {
             var instrumentos = await _repository.GetAllAsync();
@@ -49,123 +50,99 @@ namespace saed.api.Services
             return actualizado == null ? null : MapToDto(actualizado);
         }
 
-        public Task<bool> DeleteAsync(int id)
-        {
-            return _repository.DeleteAsync(id);
-        }
+        public Task<bool> DeleteAsync(int id) => _repository.DeleteAsync(id);
+
         #endregion
 
-        #region Entidad a DTO
-        // Convierte el grafo persistido a un contrato listo para la API.
-        private static InstrumentoCreateDto MapToDto(Instrumento instrumento)
-        {
-            return new InstrumentoCreateDto
-            {
-                Id = instrumento.Id,
-                Nombre = instrumento.Nombre,
-                TipoInstrumento = instrumento.TipoInstrumento,
-                EsPlantilla = instrumento.EsPlantilla,
-                Activo = instrumento.Activo,
-                ProcesoId = instrumento.ProcesoId,
-                Categorias = instrumento.Categorias
-                    .Select(MapCategoriaToDto)
-                    .ToList()
-            };
-        }
+        #region Entidad - DTO
 
-        private static CategoriaDto MapCategoriaToDto(Categoria categoria)
+        private static InstrumentoCreateDto MapToDto(Instrumento instrumento) => new()
         {
-            return new CategoriaDto
-            {
-                Id = categoria.Id,
-                Nombre = categoria.Nombre,
-                Orden = categoria.Orden,
-                Preguntas = categoria.Preguntas
-                    .Select(MapPreguntaToDto)
-                    .ToList()
-            };
-        }
+            Id = instrumento.Id,
+            Nombre = instrumento.Nombre,
+            TipoInstrumento = instrumento.TipoInstrumento,
+            EsPlantilla = instrumento.EsPlantilla,
+            Activo = instrumento.Activo,
+            // ProcesoId eliminado
+            Categorias = instrumento.Categorias
+                .Select(MapCategoriaToDto)
+                .ToList()
+        };
 
-        private static PreguntaDto MapPreguntaToDto(Pregunta pregunta)
+        private static CategoriaDto MapCategoriaToDto(Categoria categoria) => new()
         {
-            return new PreguntaDto
-            {
-                Id = pregunta.Id,
-                Texto = pregunta.Texto,
-                Tipo = pregunta.Tipo,
-                Orden = pregunta.Orden,
-                Opciones = pregunta.Opciones
-                    .Select(MapOpcionToDto)
-                    .ToList()
-            };
-        }
+            Id = categoria.Id,
+            Nombre = categoria.Nombre,
+            Orden = categoria.Orden,
+            Preguntas = categoria.Preguntas
+                .Select(MapPreguntaToDto)
+                .ToList()
+        };
 
-        private static OpcionDto MapOpcionToDto(OpcionRespuesta opcion)
+        private static PreguntaDto MapPreguntaToDto(Pregunta pregunta) => new()
         {
-            return new OpcionDto
-            {
-                Id = opcion.Id,
-                Texto = opcion.Texto,
-                Valor = opcion.Valor
-            };
-        }
+            Id = pregunta.Id,
+            Texto = pregunta.Texto,
+            Tipo = pregunta.Tipo,
+            Orden = pregunta.Orden,
+            Opciones = pregunta.Opciones
+                .Select(MapOpcionToDto)
+                .ToList()
+        };
+
+        private static OpcionDto MapOpcionToDto(OpcionRespuesta opcion) => new()
+        {
+            Id = opcion.Id,
+            Texto = opcion.Texto,
+            Valor = opcion.Valor
+        };
+
         #endregion
 
-        #region DTO a entidad
-        // Reconstruye el grafo de dominio desde el payload enviado por la API.
-        private static Instrumento MapToEntity(InstrumentoCreateDto dto)
-        {
-            return new Instrumento
-            {
-                Id = dto.Id,
-                Nombre = dto.Nombre,
-                TipoInstrumento = dto.TipoInstrumento,
-                EsPlantilla = dto.EsPlantilla,
-                Activo = dto.Activo,
-                ProcesoId = dto.ProcesoId,
-                Categorias = dto.Categorias
-                    .Select(MapCategoriaToEntity)
-                    .ToList()
-            };
-        }
+        #region DTO - Entidad
 
-        private static Categoria MapCategoriaToEntity(CategoriaDto dto)
+        private static Instrumento MapToEntity(InstrumentoCreateDto dto) => new()
         {
-            return new Categoria
-            {
-                Id = dto.Id,
-                Nombre = dto.Nombre,
-                Orden = dto.Orden,
-                Preguntas = dto.Preguntas
-                    .Select(MapPreguntaToEntity)
-                    .ToList()
-            };
-        }
+            Id = dto.Id,
+            Nombre = dto.Nombre,
+            TipoInstrumento = dto.TipoInstrumento,
+            EsPlantilla = dto.EsPlantilla,
+            Activo = dto.Activo,
+            // ProcesoId eliminado
+            Categorias = dto.Categorias
+                .Select(MapCategoriaToEntity)
+                .ToList()
+        };
 
-        private static Pregunta MapPreguntaToEntity(PreguntaDto dto)
+        private static Categoria MapCategoriaToEntity(CategoriaDto dto) => new()
         {
-            return new Pregunta
-            {
-                Id = dto.Id,
-                Texto = dto.Texto,
-                Tipo = dto.Tipo,
-                Orden = dto.Orden,
-                Opciones = dto.Opciones
-                    .Select(MapOpcionToEntity)
-                    .ToList()
-            };
-        }
+            Id = dto.Id,
+            Nombre = dto.Nombre,
+            Orden = dto.Orden,
+            Preguntas = dto.Preguntas
+                .Select(MapPreguntaToEntity)
+                .ToList()
+        };
 
-        private static OpcionRespuesta MapOpcionToEntity(OpcionDto dto)
+        private static Pregunta MapPreguntaToEntity(PreguntaDto dto) => new()
         {
-            return new OpcionRespuesta
-            {
-                Id = dto.Id,
-                PreguntaId = 0,
-                Valor = dto.Valor,
-                Texto = dto.Texto
-            };
-        }
+            Id = dto.Id,
+            Texto = dto.Texto,
+            Tipo = dto.Tipo,
+            Orden = dto.Orden,
+            Opciones = dto.Opciones
+                .Select(MapOpcionToEntity)
+                .ToList()
+        };
+
+        private static OpcionRespuesta MapOpcionToEntity(OpcionDto dto) => new()
+        {
+            Id = dto.Id,
+            PreguntaId = 0,
+            Texto = dto.Texto,
+            Valor = dto.Valor
+        };
+
         #endregion
     }
 }

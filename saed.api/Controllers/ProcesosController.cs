@@ -15,19 +15,22 @@ namespace saed.api.Controllers
             _service = service;
         }
 
+        // POST api/procesos
         [HttpPost]
-        public async Task<IActionResult> CrearProceso(CrearProcesoDto dto)
+        public async Task<IActionResult> CrearProceso([FromBody] CrearProcesoDto dto)
         {
-            var proceso = await _service.CrearProceso(
-                dto.Anio,
-                dto.Periodo,
-                dto.FechaInicio,
-                dto.FechaFin
-            );
-
-            return Ok(proceso);
+            try
+            {
+                var proceso = await _service.CrearProceso(dto);
+                return Ok(proceso);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
+        // GET api/procesos
         [HttpGet]
         public async Task<IActionResult> ObtenerProcesos()
         {
@@ -35,30 +38,61 @@ namespace saed.api.Controllers
             return Ok(procesos);
         }
 
+        // GET api/procesos/activo
         [HttpGet("activo")]
         public async Task<IActionResult> ObtenerActivo()
         {
             var proceso = await _service.ObtenerActivo();
 
             if (proceso == null)
-                return NotFound("No hay proceso activo");
-
-            return Ok(proceso);
-           
-        }
-        [HttpPut("{id}/cerrar")]
-        public async Task<IActionResult> CerrarProceso(int id)
-        {
-            var proceso = await _service.CerrarProceso(id);
+                return NotFound(new { message = "No hay proceso activo" });
 
             return Ok(proceso);
         }
+
+        // GET api/procesos/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(int id)
         {
-            var proceso = await _service.ObtenerPorId(id);
+            try
+            {
+                var proceso = await _service.ObtenerPorId(id);
+                return Ok(proceso);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
 
-            return Ok(proceso);
+        // PUT api/procesos/{id}/cerrar
+        [HttpPut("{id}/cerrar")]
+        public async Task<IActionResult> CerrarProceso(int id)
+        {
+            try
+            {
+                var proceso = await _service.CerrarProceso(id);
+                return Ok(proceso);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // PUT api/procesos/{id}/activar
+        [HttpPut("{id}/activar")]
+        public async Task<IActionResult> ActivarProceso(int id)
+        {
+            try
+            {
+                var proceso = await _service.ActivarProceso(id);
+                return Ok(proceso);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

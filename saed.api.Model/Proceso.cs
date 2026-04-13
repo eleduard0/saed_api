@@ -12,14 +12,19 @@ namespace saed.api.Model
 
         public int Anio { get; set; }
 
-        public int Periodo { get; set; } // 1, 2, 3
+        public int Periodo { get; set; } // 1=Sep-Dic, 2=Ene-Abr, 3=May-Ago
 
-        public string Nombre { get; set; }
+        public string Nombre { get; set; } = string.Empty;
 
-        public DateTime FechaInicio { get; set; }
+        public DateOnly FechaInicio { get; set; }
 
-        public DateTime FechaFin { get; set; }
+        public DateOnly FechaFin { get; set; }
 
         public bool Activo { get; set; }
+
+        // ── Relación con el instrumento asignado ──────────────────────────
+        public int? InstrumentoId { get; set; }
+
+        public Instrumento? Instrumento { get; set; }
     }
 }

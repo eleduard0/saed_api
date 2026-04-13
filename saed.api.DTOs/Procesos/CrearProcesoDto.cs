@@ -10,10 +10,12 @@ namespace saed.api.DTOs.Procesos
     {
         public int Anio { get; set; }
 
-        public int Periodo { get; set; } 
+        public int Periodo { get; set; } // 1=Sep-Dic, 2=Ene-Abr, 3=May-Ago
 
-        public DateTime FechaInicio { get; set; }
+        public DateOnly FechaInicio { get; set; }
 
-        public DateTime FechaFin { get; set; }
+        public DateOnly FechaFin { get; set; }
+
+        public int InstrumentoId { get; set; } // ← el instrumento se asigna al crear el proceso
     }
 }

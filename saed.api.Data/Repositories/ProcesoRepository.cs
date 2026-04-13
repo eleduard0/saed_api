@@ -15,6 +15,7 @@ namespace saed.api.Data.Repositories
         public async Task<List<Proceso>> GetAll()
         {
             return await _context.Procesos
+                .Include(p => p.Instrumento)   // ← para que NombreInstrumento esté disponible
                 .OrderByDescending(p => p.Anio)
                 .ToListAsync();
         }
@@ -22,7 +23,22 @@ namespace saed.api.Data.Repositories
         public async Task<Proceso?> GetActivo()
         {
             return await _context.Procesos
+                .Include(p => p.Instrumento)
                 .FirstOrDefaultAsync(p => p.Activo);
+        }
+
+        public async Task<Proceso?> GetById(int id)
+        {
+            return await _context.Procesos
+                .Include(p => p.Instrumento)
+                .FirstOrDefaultAsync(p => p.Id == id); // FirstOrDefault en lugar de FindAsync para poder usar Include
+        }
+
+        public async Task<List<Proceso>> GetByAnio(int anio)
+        {
+            return await _context.Procesos
+                .Where(p => p.Anio == anio)
+                .ToListAsync();
         }
 
         public async Task Add(Proceso proceso)
@@ -35,16 +51,6 @@ namespace saed.api.Data.Repositories
         {
             _context.Procesos.Update(proceso);
             await _context.SaveChangesAsync();
-        }
-        public async Task<Proceso?> GetById(int id)
-        {
-            return await _context.Procesos.FindAsync(id);
-        }
-        public async Task<List<Proceso>> GetByAnio(int anio)
-        {
-            return await _context.Procesos
-                .Where(p => p.Anio == anio)
-                .ToListAsync();
         }
     }
 }
