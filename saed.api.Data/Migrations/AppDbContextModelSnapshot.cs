@@ -99,6 +99,10 @@ namespace saed.api.Data.Migrations
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Grupo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("IdMaestro")
                         .IsRequired()
                         .HasColumnType("text");
@@ -111,10 +115,20 @@ namespace saed.api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("NombreMaestro")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NombreMateria")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("ProcesoId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProcesoId");
 
                     b.ToTable("Evaluaciones");
                 });
@@ -262,6 +276,8 @@ namespace saed.api.Data.Migrations
 
                     b.HasIndex("EvaluacionId");
 
+                    b.HasIndex("OpcionId");
+
                     b.HasIndex("PreguntaId");
 
                     b.ToTable("Respuestas");
@@ -314,6 +330,17 @@ namespace saed.api.Data.Migrations
                     b.Navigation("Evaluacion");
                 });
 
+            modelBuilder.Entity("saed.api.Model.Evaluacion", b =>
+                {
+                    b.HasOne("saed.api.Model.Proceso", "Proceso")
+                        .WithMany()
+                        .HasForeignKey("ProcesoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Proceso");
+                });
+
             modelBuilder.Entity("saed.api.Model.OpcionRespuesta", b =>
                 {
                     b.HasOne("saed.api.Model.Pregunta", "Pregunta")
@@ -354,6 +381,12 @@ namespace saed.api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("saed.api.Model.OpcionRespuesta", "Opcion")
+                        .WithMany()
+                        .HasForeignKey("OpcionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("saed.api.Model.Pregunta", "Pregunta")
                         .WithMany()
                         .HasForeignKey("PreguntaId")
@@ -361,6 +394,8 @@ namespace saed.api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Evaluacion");
+
+                    b.Navigation("Opcion");
 
                     b.Navigation("Pregunta");
                 });

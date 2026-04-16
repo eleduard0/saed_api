@@ -3,7 +3,7 @@ using saed.api.Model;
 
 namespace saed.api.Data.Repositories
 {
-    // Centraliza la lógica del grafo Instrumento y sus reglas de integridad.
+    // Centraliza la logica del grafo Instrumento y sus reglas de integridad.
     public class InstrumentoRepository
     {
         private readonly AppDbContext _context;
@@ -15,7 +15,7 @@ namespace saed.api.Data.Repositories
 
         #region Consultas
 
-        // Carga el instrumento con categorías, preguntas y opciones para operar sobre el grafo completo.
+        // Carga el instrumento con categorias, preguntas y opciones para operar sobre el grafo completo.
         public async Task<Instrumento?> GetByIdFullAsync(int id)
         {
             var instrumento = await _context.Instrumentos
@@ -48,7 +48,7 @@ namespace saed.api.Data.Repositories
 
         #region Escrituras
 
-        // Crea el instrumento junto con todo su árbol de categorías, preguntas y opciones.
+        // Crea el instrumento junto con todo su arbol de categorías, preguntas y opciones.
         public async Task<Instrumento> CreateAsync(Instrumento instrumento)
         {
             _context.Instrumentos.Add(instrumento);

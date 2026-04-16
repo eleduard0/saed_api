@@ -2,7 +2,7 @@ using saed.api.Model;
 
 namespace saed.api.DTOs.Instrumentos
 {
-    // Contrato jerárquico para altas, consultas y edición del instrumento completo.
+    // Contrato jerarquico para altas, consultas y edicion del instrumento completo.
     public class InstrumentoCreateDto
     {
         public int Id { get; set; }

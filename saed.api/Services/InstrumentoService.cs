@@ -4,7 +4,7 @@ using saed.api.Model;
 
 namespace saed.api.Services
 {
-    // Orquesta el flujo del módulo y hace el mapeo explícito entre DTOs y entidades.
+    // Orquesta el flujo del modulo y hace el mapeo explicito entre DTOs y entidades.
     public class InstrumentoService
     {
         private readonly InstrumentoRepository _repository;
@@ -14,7 +14,7 @@ namespace saed.api.Services
             _repository = repository;
         }
 
-        #region Operaciones públicas
+        #region Operaciones publicas
 
         public async Task<List<InstrumentoCreateDto>> GetAllAsync()
         {

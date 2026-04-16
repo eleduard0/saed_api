@@ -12,7 +12,7 @@ namespace saed.api.Model
 
         public bool Activo { get; set; } = true;
 
-        // ProcesoId eliminado — la relación vive en Proceso.InstrumentoId
+        // ProcesoId eliminado la relacion vive en Proceso.InstrumentoId
         public ICollection<Categoria> Categorias { get; set; } = new List<Categoria>();
     }
 }

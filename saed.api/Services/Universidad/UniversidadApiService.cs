@@ -71,8 +71,7 @@ namespace saed.api.Services.Universidad
                 },
                 token
             );
-            Console.WriteLine($"GetStudentData response: {data.ToString()}");
-            Console.WriteLine($"ValueKind: {data.ValueKind}");
+
 
             if (data.ValueKind != JsonValueKind.Array || data.GetArrayLength() == 0)
                 return null;
