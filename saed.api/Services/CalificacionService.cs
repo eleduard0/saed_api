@@ -13,23 +13,22 @@ namespace saed.api.Services
             _context = context;
         }
 
+        // ── Reporte completo del maestro desglosado por materia/grupo ─────────
         public async Task<CalificacionMaestroDto> ObtenerCalificacion(string idMaestro, int procesoId)
         {
             var evaluaciones = await _context.Evaluaciones
                 .Where(e => e.IdMaestro == idMaestro && e.ProcesoId == procesoId)
                 .Include(e => e.Respuestas)
-                    .ThenInclude(r => r.Pregunta)   // ← texto real de la pregunta
+                    .ThenInclude(r => r.Pregunta)
                 .Include(e => e.Respuestas)
-                    .ThenInclude(r => r.Opcion)     // ← texto y valor de la opción
+                    .ThenInclude(r => r.Opcion)
                 .Include(e => e.Comentario)
                 .ToListAsync();
 
             if (!evaluaciones.Any())
                 throw new Exception("No hay evaluaciones para este maestro en el proceso indicado.");
 
-            var proceso = await _context.Procesos.FindAsync(procesoId)
-                ?? throw new Exception("Proceso no encontrado.");
-
+            // ── Calificación global (todas las materias ponderadas) ────────────
             var todasRespuestas = evaluaciones
                 .SelectMany(e => e.Respuestas)
                 .Where(r => r.Opcion != null)
@@ -39,32 +38,62 @@ namespace saed.api.Services
                 ? Math.Round(todasRespuestas.Average(r => r.Opcion.Valor), 2)
                 : 0;
 
-            var porPregunta = todasRespuestas
-                .GroupBy(r => r.PreguntaId)
-                .Select(g =>
+            // ── Desglosar por MateriaId + Grupo ───────────────────────────────
+            var porMateria = evaluaciones
+                .GroupBy(e => new { e.MateriaId, e.NombreMateria, e.Grupo })
+                .Select(grupo =>
                 {
-                    var textoPregunta = g
-                        .Select(r => r.Pregunta?.Texto)
-                        .FirstOrDefault(t => !string.IsNullOrEmpty(t))
-                        ?? "Sin texto";
+                    var respuestasGrupo = grupo
+                        .SelectMany(e => e.Respuestas)
+                        .Where(r => r.Opcion != null)
+                        .ToList();
 
-                    return new CalificacionPreguntaDto
+                    var calMateria = respuestasGrupo.Any()
+                        ? Math.Round(respuestasGrupo.Average(r => r.Opcion.Valor), 2)
+                        : 0;
+
+                    // Preguntas de esta materia/grupo
+                    var porPregunta = respuestasGrupo
+                        .GroupBy(r => r.PreguntaId)
+                        .Select(g =>
+                        {
+                            var texto = g
+                                .Select(r => r.Pregunta?.Texto)
+                                .FirstOrDefault(t => !string.IsNullOrEmpty(t))
+                                ?? "Sin texto";
+
+                            return new CalificacionPreguntaDto
+                            {
+                                PreguntaId = g.Key,
+                                TextoPregunta = texto,
+                                Promedio = Math.Round(g.Average(r => r.Opcion.Valor), 2),
+                                TotalRespuestas = g.Count(),
+                                Distribucion = g
+                                    .GroupBy(r => r.Opcion?.Texto ?? "Sin opción")
+                                    .ToDictionary(d => d.Key, d => d.Count())
+                            };
+                        })
+                        .OrderBy(p => p.PreguntaId)
+                        .ToList();
+
+                    // Comentarios de esta materia/grupo
+                    var comentarios = grupo
+                        .Where(e => e.Comentario != null && !string.IsNullOrWhiteSpace(e.Comentario.Texto))
+                        .Select(e => e.Comentario!.Texto)
+                        .ToList();
+
+                    return new CalificacionPorMateriaDto
                     {
-                        PreguntaId = g.Key,
-                        TextoPregunta = textoPregunta,
-                        Promedio = Math.Round(g.Average(r => r.Opcion.Valor), 2),
-                        TotalRespuestas = g.Count(),
-                        Distribucion = g
-                            .GroupBy(r => r.Opcion?.Texto ?? "Sin opción")
-                            .ToDictionary(d => d.Key, d => d.Count())
+                        MateriaId = grupo.Key.MateriaId,
+                        NombreMateria = grupo.Key.NombreMateria,
+                        Grupo = grupo.Key.Grupo,
+                        TotalEvaluaciones = grupo.Count(),
+                        Calificacion = calMateria,
+                        PorPregunta = porPregunta,
+                        Comentarios = comentarios
                     };
                 })
-                .OrderBy(p => p.PreguntaId)
-                .ToList();
-
-            var comentarios = evaluaciones
-                .Where(e => e.Comentario != null && !string.IsNullOrWhiteSpace(e.Comentario.Texto))
-                .Select(e => e.Comentario!.Texto)
+                .OrderBy(m => m.NombreMateria)
                 .ToList();
 
             return new CalificacionMaestroDto
@@ -74,11 +103,11 @@ namespace saed.api.Services
                 ProcesoId = procesoId,
                 TotalEvaluaciones = evaluaciones.Count,
                 CalificacionGlobal = calificacionGlobal,
-                PorPregunta = porPregunta,
-                Comentarios = comentarios
+                PorMateria = porMateria
             };
         }
 
+        // ── Listado de maestros con calificación global ───────────────────────
         public async Task<List<ResumenCalificacionDto>> ListarCalificaciones(int procesoId)
         {
             var grupos = await _context.Evaluaciones
@@ -90,18 +119,24 @@ namespace saed.api.Services
 
             return grupos.Select(g =>
             {
-                var todasRespuestas = g
+                var respuestas = g
                     .SelectMany(e => e.Respuestas)
                     .Where(r => r.Opcion != null)
                     .ToList();
+
+                var totalMaterias = g
+                    .Select(e => new { e.MateriaId, e.Grupo })
+                    .Distinct()
+                    .Count();
 
                 return new ResumenCalificacionDto
                 {
                     IdMaestro = g.Key.IdMaestro,
                     NombreMaestro = g.Key.NombreMaestro,
                     TotalEvaluaciones = g.Count(),
-                    CalificacionGlobal = todasRespuestas.Any()
-                        ? Math.Round(todasRespuestas.Average(r => r.Opcion.Valor), 2)
+                    TotalMaterias = totalMaterias,
+                    CalificacionGlobal = respuestas.Any()
+                        ? Math.Round(respuestas.Average(r => r.Opcion.Valor), 2)
                         : 0
                 };
             })
