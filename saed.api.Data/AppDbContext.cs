@@ -114,6 +114,67 @@ namespace saed.api.Data
                 .IsRequired();
 
             #endregion
+            #region Evaluacion
+
+            modelBuilder.Entity<Evaluacion>().ToTable("Evaluaciones");
+            modelBuilder.Entity<Respuesta>().ToTable("Respuestas");
+            modelBuilder.Entity<Comentario>().ToTable("Comentarios");
+
+            // Evaluacion - Proceso
+            modelBuilder.Entity<Evaluacion>()
+                .HasOne(e => e.Proceso)
+                .WithMany()
+                .HasForeignKey(e => e.ProcesoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Indice unico: un alumno no puede evaluar al mismo maestro/materia dos veces en el mismo proceso
+            modelBuilder.Entity<Evaluacion>()
+                .HasIndex(e => new { e.ProcesoId, e.MatriculaAlumno, e.IdMaestro, e.MateriaId })
+                .IsUnique();
+
+            // Respuesta - Evaluacion
+            modelBuilder.Entity<Respuesta>()
+                .HasOne(r => r.Evaluacion)
+                .WithMany(e => e.Respuestas)
+                .HasForeignKey(r => r.EvaluacionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Respuesta - Pregunta
+            modelBuilder.Entity<Respuesta>()
+                .HasOne(r => r.Pregunta)
+                .WithMany()
+                .HasForeignKey(r => r.PreguntaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Respuesta - OpcionRespuesta (navegacion para reportes)
+            modelBuilder.Entity<Respuesta>()
+                .HasOne(r => r.Opcion)
+                .WithMany()
+                .HasForeignKey(r => r.OpcionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Comentario - Evaluacion (1 a 1)
+            modelBuilder.Entity<Comentario>()
+                .HasOne(c => c.Evaluacion)
+                .WithOne(e => e.Comentario)
+                .HasForeignKey<Comentario>(c => c.EvaluacionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Campos requeridos de Evaluacion
+            modelBuilder.Entity<Evaluacion>()
+                .Property(e => e.MatriculaAlumno).HasMaxLength(20).IsRequired();
+            modelBuilder.Entity<Evaluacion>()
+                .Property(e => e.IdMaestro).HasMaxLength(20).IsRequired();
+            modelBuilder.Entity<Evaluacion>()
+                .Property(e => e.NombreMaestro).HasMaxLength(200).IsRequired();
+            modelBuilder.Entity<Evaluacion>()
+                .Property(e => e.MateriaId).HasMaxLength(20).IsRequired();
+            modelBuilder.Entity<Evaluacion>()
+                .Property(e => e.NombreMateria).HasMaxLength(200).IsRequired();
+            modelBuilder.Entity<Evaluacion>()
+                .Property(e => e.Grupo).HasMaxLength(20).IsRequired();
+
+            #endregion
         }
     }
 }

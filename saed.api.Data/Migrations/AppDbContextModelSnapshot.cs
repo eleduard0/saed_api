@@ -85,7 +85,7 @@ namespace saed.api.Data.Migrations
                     b.HasIndex("EvaluacionId")
                         .IsUnique();
 
-                    b.ToTable("Comentarios");
+                    b.ToTable("Comentarios", (string)null);
                 });
 
             modelBuilder.Entity("saed.api.Model.Evaluacion", b =>
@@ -101,36 +101,43 @@ namespace saed.api.Data.Migrations
 
                     b.Property<string>("Grupo")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("IdMaestro")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("MateriaId")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("MatriculaAlumno")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("NombreMaestro")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("NombreMateria")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("ProcesoId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProcesoId");
+                    b.HasIndex("ProcesoId", "MatriculaAlumno", "IdMaestro", "MateriaId")
+                        .IsUnique();
 
-                    b.ToTable("Evaluaciones");
+                    b.ToTable("Evaluaciones", (string)null);
                 });
 
             modelBuilder.Entity("saed.api.Model.Instrumento", b =>
@@ -280,7 +287,7 @@ namespace saed.api.Data.Migrations
 
                     b.HasIndex("PreguntaId");
 
-                    b.ToTable("Respuestas");
+                    b.ToTable("Respuestas", (string)null);
                 });
 
             modelBuilder.Entity("saed.api.Model.Usuario", b =>
@@ -335,7 +342,7 @@ namespace saed.api.Data.Migrations
                     b.HasOne("saed.api.Model.Proceso", "Proceso")
                         .WithMany()
                         .HasForeignKey("ProcesoId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Proceso");
@@ -384,13 +391,13 @@ namespace saed.api.Data.Migrations
                     b.HasOne("saed.api.Model.OpcionRespuesta", "Opcion")
                         .WithMany()
                         .HasForeignKey("OpcionId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("saed.api.Model.Pregunta", "Pregunta")
                         .WithMany()
                         .HasForeignKey("PreguntaId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Evaluacion");
